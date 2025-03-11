@@ -80,7 +80,7 @@ jobs:
 
     - name: Set bundle name
       id: bundle
-      run: echo "::set-output name=BUNDLE_FILE_NAME::cnmatrix-$(git describe --tags)-${{ matrix.os }}.zip"
+      run: echo "BUNDLE_FILE_NAME=cnmatrix-$(git describe --tags)-${{ matrix.os }}.zip" >> $GITHUB_OUTPUT
 
     - name: Bundle
       if: matrix.build_type == 'Release'
@@ -94,6 +94,9 @@ jobs:
         name: cnmatrix-${{ matrix.os }}-${{ matrix.build_type }}
         path: | 
           ${{runner.workspace}}/build/${{steps.bundle.outputs.BUNDLE_FILE_NAME}}
+        # TODO: sort out single precision on/off collision
+        overwrite: true
+
     - name: Get release
       id: get_release
       if: github.event_name == 'release'
