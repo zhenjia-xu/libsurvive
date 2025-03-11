@@ -12,6 +12,13 @@
 #endif
 #endif
 
+/**
+ * Work around an issue in MSVC where NAN is not a constant expression
+ */
+#ifdef _MSC_VER
+#define _UCRT_NOISY_NAN
+#endif
+
 #include <stdbool.h>
 
 #include <malloc.h>
