@@ -1,3 +1,3 @@
-[submodule "libs/cnkalman"]
-	path = libs/cnkalman
-	url = ../cnkalman.git
+[submodule "libs/cnkalman/libs/pybind11"]
+	path = libs/cnkalman/libs/pybind11
+	url = git@github.com:pybind/pybind11.git
