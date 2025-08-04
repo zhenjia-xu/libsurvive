@@ -9,9 +9,9 @@ with open(os.path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 
-version = subprocess.check_output(["git", "describe", "--tags", "--long"])
-version = version.strip().decode('utf-8').replace("-", ".")[1:]
-version = version[:version.rfind("g")-1]
+# version = subprocess.check_output(["git", "describe", "--tags", "--long"])
+# version = version.strip().decode('utf-8').replace("-", ".")[1:]
+# version = version[:version.rfind("g")-1]
 
 pysurvive_path = this_directory + '/bindings/python/pysurvive/'
 cmake_args = ['-DPYTHON_GENERATED_DIR="' + pysurvive_path + '"',
@@ -29,7 +29,7 @@ description = """Libsurvive is a set of tools and libraries that enable 6 DoF tr
  devices and should support any tracked object commercially available."""
 
 setup(name='pysurvive',
-      version=version,
+      # version=version,
       long_description=long_description,
       long_description_content_type='text/markdown',
       description=description,
