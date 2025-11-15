@@ -41,6 +41,7 @@ VERBOSE_OPTION(USE_HEX_FLOAT_PRINTF "Use hex floats when recording" OFF)
 VERBOSE_OPTION(USE_OPENCV "Use opencv proper for math operations" OFF)
 VERBOSE_OPTION(USE_COLUMN_MAJOR_MATRICES "Use column major matrices for math operations" OFF)
 VERBOSE_OPTION(USE_CPU_TUNE "Compile for your specific CPU" OFF)
+VERBOSE_OPTION(SURVIVE_ENABLE_FULL_API "Expose the entire survive API" OFF)
 
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
@@ -77,6 +78,10 @@ VERBOSE_OPTION(BUILD_LH1_SUPPORT "Build LH1 support" ON)
 
 if(BUILD_LH1_SUPPORT)
   add_definitions(-DBUILD_LH1_SUPPORT)
+endif()
+
+if(SURVIVE_ENABLE_FULL_API)
+  add_definitions(-DSURVIVE_ENABLE_FULL_API)
 endif()
 
 if(USE_HEX_FLOAT_PRINTF)
@@ -144,7 +149,7 @@ IF(UNIX)
 	if(ENABLE_WARNINGS_AS_ERRORS)
 	  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
 	endif()
-	      	
+
 	if(USE_ASAN)
 	  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fsanitize=undefined")
 	  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=undefined")
@@ -153,10 +158,10 @@ IF(UNIX)
 	if(USE_MSAN)
 	  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=memory -fsanitize-memory-track-origins -fsanitize=undefined")
 	  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=memory  -fsanitize-memory-track-origins -fsanitize=undefined")
-	endif()	    
+	endif()
 endif()
 
-include_directories(redist include/libsurvive include)
+include_directories(redist include/libsurvive include libs/cnmatrix/include libs/cnkalman/include)
 
 if(USE_SINGLE_PRECISION)
     add_definitions(-DUSE_FLOAT)
@@ -242,7 +247,7 @@ if(DOTNET)
 		#SET(DOTNET_RUNTIME_FLAGS "--runtime;win-x86")
 	endif()
   endif()
-  
+
 	message("${DOTNET} build -c Release ${DOTNET_RUNTIME_FLAGS}")
   execute_process(
     COMMAND ${DOTNET} build -c Release ${DOTNET_RUNTIME_FLAGS}
@@ -278,14 +283,19 @@ if(NOT WIN32 AND PYTHON_GENERATED_DIR)
 
   if(CTYPESGEN)
     message("-- Building python bindings file to ${PYTHON_GENERATED_DIR}")
-    message("-- ctypesgen found at ${CTYPESGEN}") 
+    message("-- ctypesgen found at ${CTYPESGEN}")
     get_property(include_directories DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
     set(INCLUDE_FLAGS "")
     foreach(include_directory ${include_directories})
       list(APPEND INCLUDE_FLAGS "-I${include_directory}")
     endforeach()
 
-    add_custom_target(pysurvive ALL COMMAND ${Python3_EXECUTABLE} ${CTYPESGEN} ${CMAKE_SOURCE_DIR}/include/libsurvive/*.h ${INCLUDE_FLAGS} --no-macros -L$<TARGET_FILE_DIR:survive> -lsurvive
+    set(CTYPESGEN_DEFINES "")
+    if(SURVIVE_ENABLE_FULL_API)
+      list(APPEND CTYPESGEN_DEFINES -D SURVIVE_ENABLE_FULL_API)
+    endif()
+
+    add_custom_target(pysurvive ALL COMMAND ${Python3_EXECUTABLE} ${CTYPESGEN} ${CMAKE_SOURCE_DIR}/include/libsurvive/*.h ${INCLUDE_FLAGS} ${CTYPESGEN_DEFINES} --no-macros -L$<TARGET_FILE_DIR:survive> -lsurvive
             --strip-prefix=survive_ -P Survive -o ${PYTHON_GENERATED_DIR}pysurvive_generated.py)
   endif()
 
