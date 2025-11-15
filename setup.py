@@ -18,7 +18,8 @@ cmake_args = ['-DPYTHON_GENERATED_DIR="' + pysurvive_path + '"',
               "-DDOWNLOAD_EIGEN=ON",
               "-DUSE_EIGEN=ON",
               "-DBUILD_APPLICATIONS=OFF",
-              "-DLIB_INSTALL_DIR=bindings/python/pysurvive/"]
+              "-DLIB_INSTALL_DIR=bindings/python/pysurvive/",
+              "-DSURVIVE_ENABLE_FULL_API=ON",]
 
 if platform.system() != 'Windows':
     cmake_args.append('-DUSE_EIGEN=ON')
