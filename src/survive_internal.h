@@ -21,6 +21,7 @@ SURVIVE_EXPORT survive_driver_fn GetDriverWithPrefix(const char *prefix, const c
 SURVIVE_EXPORT void   ListDrivers();
 SURVIVE_EXPORT survive_driver_fn GetDriverByConfig(SurviveContext *ctx, const char *name, const char *configname,
 												   const char *configdef);
+SURVIVE_EXPORT bool survive_channel_is_ignored(struct SurviveContext *ctx, survive_channel channel);
 
 void survive_load_plugins(const char *additional_plugin_dir);
 typedef double (*survive_run_time_fn)(const SurviveContext *ctx, void *user);
