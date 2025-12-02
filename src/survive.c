@@ -49,6 +49,7 @@ STATIC_CONFIG_ITEM(LH_0_DISABLE, "lighthouse-0-disable", 'b', "Disable lh at idx
 STATIC_CONFIG_ITEM(LH_1_DISABLE, "lighthouse-1-disable", 'b', "Disable lh at idx 1", 0)
 STATIC_CONFIG_ITEM(LH_2_DISABLE, "lighthouse-2-disable", 'b', "Disable lh at idx 2", 0)
 STATIC_CONFIG_ITEM(LH_3_DISABLE, "lighthouse-3-disable", 'b', "Disable lh at idx 3", 0)
+STATIC_CONFIG_ITEM(IGNORE_CHANNELS, "ignore-channels", 's', "Comma-separated lighthouse channels to ignore", "")
 
 STRUCT_CONFIG_SECTION(SurviveContext)
 STRUCT_CONFIG_ITEM("lighthouse-max-update", "Maximum instant move for a lighthouse", .01, t->settings.lh_max_update);
@@ -80,11 +81,51 @@ int SymnumCheck(const char *path, const char *name, void *location, long size) {
 
 #endif
 
+static void survive_load_ignore_channels(SurviveContext *ctx) {
+	if (ctx->ignore_channel_mask_valid)
+		return;
+
+	memset(ctx->ignore_channel_mask, 0, sizeof(ctx->ignore_channel_mask));
+
+	const char *cfg = survive_configs(ctx, IGNORE_CHANNELS_TAG, SC_GET, "");
+	if (cfg && cfg[0]) {
+		char *cfg_copy = strdup(cfg);
+		if (!cfg_copy) {
+			return;
+		}
+		char *saveptr;
+		for (char *tok = strtok_r(cfg_copy, ",", &saveptr); tok; tok = strtok_r(NULL, ",", &saveptr)) {
+			char *endptr = 0;
+			long channel = strtol(tok, &endptr, 10);
+			if (endptr == tok)
+				continue;
+
+			if (channel >= 0 && channel < NUM_GEN2_LIGHTHOUSES) {
+				ctx->ignore_channel_mask[channel] = true;
+			}
+		}
+		free(cfg_copy);
+	}
+
+	ctx->ignore_channel_mask_valid = true;
+}
+
+SURVIVE_EXPORT bool survive_channel_is_ignored(SurviveContext *ctx, survive_channel channel) {
+	if (channel < 0 || channel >= NUM_GEN2_LIGHTHOUSES)
+		return false;
+
+	if (!ctx->ignore_channel_mask_valid) {
+		survive_load_ignore_channels(ctx);
+	}
+
+	return ctx->ignore_channel_mask[channel];
+}
+
 static void reset_stderr(FILE *f) {
 #ifndef _WIN32
 	fprintf(f, "\033[0m");
 #else
-	HANDLE   hConsole = GetStdHandle(STD_ERROR_HANDLE);
+	HANDLE hConsole = GetStdHandle(STD_ERROR_HANDLE);
 	SetConsoleTextAttribute(hConsole, 7);
 #endif
 }
@@ -122,7 +163,7 @@ static void survive_default_error(struct SurviveContext *ctx, SurviveError error
 
 static void survive_default_info(struct SurviveContext *ctx, const char *fault) {
   	survive_recording_info_process(ctx, fault);
-	
+
     if(ctx->log_target == 0) return;
 	SURVIVE_INVOKE_HOOK(printf, ctx, "Info: %s\n", fault);
 	fflush(ctx->log_target);
@@ -216,7 +257,7 @@ static void PrintMatchingDrivers( const char * prefix, const char * matchingpara
 	char stringmatch[128];
 	snprintf( stringmatch, 127, "%s%s", prefix, matchingparam?matchingparam:"" );
 	const char * DriverName;
-	while ((DriverName = GetDriverNameMatching(stringmatch, i++))) 
+	while ((DriverName = GetDriverNameMatching(stringmatch, i++)))
 	{
 		printf( "%s ", DriverName+strlen(prefix) );
 	}
@@ -224,6 +265,11 @@ static void PrintMatchingDrivers( const char * prefix, const char * matchingpara
 
 SURVIVE_EXPORT int8_t survive_get_bsd_idx(SurviveContext *ctx, survive_channel channel) {
 	if (channel < 0 || channel >= 16) {
+		return -1;
+	}
+
+	if (survive_channel_is_ignored(ctx, channel)) {
+		SV_INFO("Ignoring lighthouse on channel %d", channel);
 		return -1;
 	}
 
@@ -659,7 +705,7 @@ int survive_startup(SurviveContext *ctx) {
 	warn_missing_drivers(ctx, "openvr");
 	warn_missing_drivers(ctx, "playback");
 	warn_missing_drivers(ctx, "usbmon");
-	
+
 	bool loadDefaultDriver = true;
 	char buffer[1024] = "Loaded drivers: ";
 	{
@@ -684,7 +730,7 @@ int survive_startup(SurviveContext *ctx) {
 					int driverReturn = callDriver(ctx, DriverName, buffer); // == SURVIVE_DRIVER_NORMAL
 					// Auto drivers dont preclude the default HTC driver
 					if (manually_enabled && driverReturn != SURVIVE_DRIVER_PASSIVE) {
-						loadDefaultDriver = false; 
+						loadDefaultDriver = false;
 					}
 				}
 			}

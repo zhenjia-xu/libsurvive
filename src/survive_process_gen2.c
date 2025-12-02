@@ -190,6 +190,9 @@ void survive_ootx_behavior(SurviveObject *so, int8_t bsd_idx, int8_t lh_version,
 SURVIVE_EXPORT void survive_default_sync_process(SurviveObject *so, survive_channel channel, survive_timecode timecode,
 												 bool ootx, bool gen) {
 	struct SurviveContext *ctx = so->ctx;
+	if (survive_channel_is_ignored(ctx, channel))
+		return;
+
 	int8_t bsd_idx = survive_get_bsd_idx(ctx, channel);
 	if (bsd_idx == -1) {
 		SV_WARN("Invalid channel requested(%d) for %s", channel, so->codename)
@@ -318,6 +321,8 @@ static inline int8_t determine_plane(SurviveObject *so, int8_t bsd_idx, FLT angl
 SURVIVE_EXPORT void survive_default_sweep_process(SurviveObject *so, survive_channel channel, int sensor_id,
 												  survive_timecode timecode, bool half_clock_flag) {
 	struct SurviveContext *ctx = so->ctx;
+	if (survive_channel_is_ignored(ctx, channel))
+		return;
 
 	int8_t bsd_idx = survive_get_bsd_idx(ctx, channel);
 	if (bsd_idx == -1) {
@@ -385,6 +390,9 @@ SURVIVE_EXPORT void survive_default_sweep_process(SurviveObject *so, survive_cha
 SURVIVE_EXPORT void survive_default_sweep_angle_process(SurviveObject *so, survive_channel channel, int sensor_id,
 														survive_timecode timecode, int8_t plane, FLT angle) {
 	struct SurviveContext *ctx = so->ctx;
+	if (survive_channel_is_ignored(ctx, channel))
+		return;
+
 	int8_t bsd_idx = survive_get_bsd_idx(ctx, channel);
 	if (bsd_idx == -1) {
 		SV_WARN("Invalid channel requested(%d) for %s", channel, so->codename)

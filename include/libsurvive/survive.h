@@ -379,6 +379,8 @@ struct SurviveContext {
 	int activeLighthouses;
 	BaseStationData bsd[NUM_GEN2_LIGHTHOUSES];
 	int8_t bsd_map[NUM_GEN2_LIGHTHOUSES]; // maps channels to idxs
+	bool ignore_channel_mask_valid;
+	bool ignore_channel_mask[NUM_GEN2_LIGHTHOUSES];
 
 	void *disambiguator_data;			 // global disambiguator data
 	struct SurviveRecordingData *recptr; // Iff recording is attached
